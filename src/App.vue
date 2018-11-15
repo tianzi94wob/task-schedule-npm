@@ -19,16 +19,19 @@
           <el-table-column
                   type="index"
                   label="序号"
-                  width="90">
+                  width="90"
+                  align="left">
           </el-table-column>
           <el-table-column
                   prop="serverName"
-                  label="节点名称">
+                  label="节点名称"
+                  align="left">
           </el-table-column>
           <el-table-column
                   prop="leader"
                   label="是否调度节点"
-                  width="120">
+                  width="120"
+                  align="left">
             <template scope="scope">
               {{ scope.row.leader=='0'?'否':'是'}}
             </template>
@@ -54,68 +57,81 @@
       <el-col :span="18" :offset="3">
         <el-table
                 :data="taskTableData"
-                style="width: 100%">
+                style="width: 100%"
+                :default-sort = "{prop: 'lastRunningTime', order: 'descending'}">
+          <el-table-column type="expand">
+            <template slot-scope="props">
+              <el-form label-position="left" inline class="demo-table-expand">
+                <el-form-item label="cron表达式">
+                  <span>{{ props.row.cronExpression }}</span>
+                </el-form-item>
+                <el-form-item label="执行次数">
+                  <span>{{ props.row.runTimes }}</span>
+                </el-form-item>
+                <el-form-item label="最近耗时ms">
+                  <span>{{ props.row.msc==0?'--':props.row.msc}}</span>
+                </el-form-item>
+                <el-form-item label="参数">
+                  <span>{{ props.row.params?props.row.params:'--'}}</span>
+                </el-form-item>
+                <el-form-item label="目标bean">
+                  <span>{{ props.row.targetBean }}</span>
+                </el-form-item>
+                <el-form-item label="目标方法">
+                  <span>{{ props.row.targetMethod }}</span>
+                </el-form-item>
+                <el-form-item label="上下文">
+                  <span>{{ props.row.prjName }}</span>
+                </el-form-item>
+                <el-form-item label="执行节点">
+                  <span>{{ props.row.currentServer }}</span>
+                </el-form-item>
+              </el-form>
+            </template>
+          </el-table-column>
+
           <el-table-column
                   type="index"
                   label="序号"
-                  width="90">
+                  width="90"
+                  align="left">
           </el-table-column>
           <el-table-column
-                  prop="type"
-                  label="类型">
-            <template scope="scope">
-              {{ scope.row.type!='1'?'持久化任务':'普通任务'}}
-            </template>
-          </el-table-column>
-          <el-table-column
-                  prop="targetBean"
-                  label="目标bean"
-                  width="120">
-          </el-table-column>
-          <el-table-column
-                  prop="targetMethod"
-                  label="目标方法"
-                  width="120">
-          </el-table-column>
-          <el-table-column
-                  prop="params"
-                  label="参数">
-            <template scope="scope">
-              {{ scope.row.params?scope.row.params:'--'}}
-            </template>
-          </el-table-column>
-          <el-table-column
-                  prop="cronExpression"
-                  label="cron表达式">
-          </el-table-column>
-          <el-table-column
-                  prop="currentServer"
-                  label="执行节点">
-          </el-table-column>
-          <el-table-column
-                  prop="runTimes"
-                  label="执行次数">
+                  prop="jobName"
+                  label="任务名"
+                  align="left">
           </el-table-column>
           <el-table-column
                   prop="lastRunningTime"
                   :formatter="dateFormat"
-                  label="最近执行时间">
-          </el-table-column>
-          <el-table-column
-                  prop="msc"
-                  label="最近耗时ms">
-            <template scope="scope">
-              {{ scope.row.msc==0?'--':scope.row.msc}}
-            </template>
+                  label="最近执行时间"
+                  sortable
+                  align="left">
           </el-table-column>
           <el-table-column
                   prop="nextRuningTime"
                   :formatter="dateFormat"
-                  label="下次执行时间">
+                  label="下次执行时间"
+                  sortable
+                  align="left">
+          </el-table-column>
+          <el-table-column
+                  prop="type"
+                  label="类型"
+                  align="left"
+                  :filters="[{ text: '持久化任务', value: '2' },{ text: '动态任务', value: '1' } ]"
+                  :filter-method="filterTag"
+                  filter-placement="bottom-end">
+            <template slot-scope="scope">
+              <el-tag
+                      :type="scope.row.type != '1' ? 'success' : 'primary'"
+                      disable-transitions>{{ scope.row.type!='1'?'持久化任务':'动态任务'}}</el-tag>
+            </template>
           </el-table-column>
           <el-table-column
                   prop="jobStatus"
-                  label="状态">
+                  label="状态"
+                  align="left">
             <template scope="scope">
               {{ scope.row.jobStatus=='0'?'未调度':'调度中'}}
             </template>
@@ -126,6 +142,20 @@
   </div>
 </template>
 
+<style>
+  .demo-table-expand {
+    font-size: 0;
+  }
+  .demo-table-expand label {
+    width: 90px;
+    color: #99a9bf;
+  }
+  .demo-table-expand .el-form-item {
+    margin-right: 0;
+    margin-bottom: 0;
+    width: 50%;
+  }
+</style>
 <script>
     export default {
         data() {
@@ -142,6 +172,9 @@
             }
         },
         methods: {
+            filterTag(value, row) {
+                return row.type === value;
+            },
             dateFormat:function(row, column) {
                 var val = row[column.property];
                 if (val == undefined) {
